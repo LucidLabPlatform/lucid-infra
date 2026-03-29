@@ -1,0 +1,144 @@
+services:
+  lucid-db:
+    build: ../lucid-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-lucid}
+      POSTGRES_USER: ${POSTGRES_USER:-lucid}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lucid_secret}
+    volumes:
+      - lucid_db_data:/var/lib/postgresql/data
+
+  lucid-auth:
+    build: ../lucid-auth
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      LUCID_DB_URL: postgresql://${POSTGRES_USER:-lucid}:${POSTGRES_PASSWORD:-lucid_secret}@lucid-db:5432/${POSTGRES_DB:-lucid}
+      BOOTSTRAP_CC_USER: ${LUCID_MQTT_USERNAME:-central-command}
+      BOOTSTRAP_CC_PASSWORD: ${LUCID_MQTT_PASSWORD:-change-me}
+    depends_on:
+      - lucid-db
+
+  emqx:
+    build: ../lucid-emqx
+    restart: unless-stopped
+    environment:
+      EMQX_NAME: emqx
+      EMQX_HOST: emqx
+      EMQX_DASHBOARD__DEFAULT_USERNAME: ${EMQX_API_USERNAME:-lucid}
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: ${EMQX_API_PASSWORD:-lucid}
+      EMQX_ALLOW_ANONYMOUS: "false"
+      EMQX_AUTHENTICATION__1__MECHANISM: password_based
+      EMQX_AUTHENTICATION__1__BACKEND: http
+      EMQX_AUTHENTICATION__1__METHOD: post
+      EMQX_AUTHENTICATION__1__URL: http://lucid-auth:4000/authn
+      EMQX_AUTHENTICATION__1__HEADERS__CONTENT_TYPE: application/json
+      EMQX_AUTHENTICATION__1__BODY: '{"username":"$${username}","password":"$${password}","clientid":"$${clientid}"}'
+      EMQX_AUTHORIZATION__NO_MATCH: deny
+      EMQX_AUTHORIZATION__SOURCES__1__TYPE: http
+      EMQX_AUTHORIZATION__SOURCES__1__ENABLE: "true"
+      EMQX_AUTHORIZATION__SOURCES__1__METHOD: post
+      EMQX_AUTHORIZATION__SOURCES__1__URL: http://lucid-auth:4000/authz
+      EMQX_AUTHORIZATION__SOURCES__1__HEADERS__CONTENT_TYPE: application/json
+      EMQX_AUTHORIZATION__SOURCES__1__BODY: '{"username":"$${username}","clientid":"$${clientid}","topic":"$${topic}","action":"$${action}"}'
+    ports:
+      - "1883:1883"
+      - "8083:8083"
+      - "8084:8084"
+      - "8883:8883"
+      - "18083:18083"
+    volumes:
+      - emqx_data:/opt/emqx/data
+    depends_on:
+      - lucid-auth
+
+  lucid-fleet-core:
+    build: ../lucid-fleet-core
+    restart: unless-stopped
+    environment:
+      LUCID_MQTT_HOST: emqx
+      LUCID_MQTT_PORT: "1883"
+      LUCID_MQTT_USERNAME: ${LUCID_MQTT_USERNAME:-central-command}
+      LUCID_MQTT_PASSWORD: ${LUCID_MQTT_PASSWORD:-change-me}
+      LUCID_DB_URL: postgresql://${POSTGRES_USER:-lucid}:${POSTGRES_PASSWORD:-lucid_secret}@lucid-db:5432/${POSTGRES_DB:-lucid}
+      EMQX_API_URL: http://emqx:18083/api/v5
+      EMQX_API_USERNAME: ${EMQX_API_USERNAME:-lucid}
+      EMQX_API_PASSWORD: ${EMQX_API_PASSWORD:-lucid}
+    depends_on:
+      - lucid-db
+      - lucid-auth
+      - emqx
+
+  lucid-automation:
+    build: ../lucid-automation
+    restart: unless-stopped
+    environment:
+      LUCID_DB_URL: postgresql://${POSTGRES_USER:-lucid}:${POSTGRES_PASSWORD:-lucid_secret}@lucid-db:5432/${POSTGRES_DB:-lucid}
+      LUCID_FLEET_CORE_URL: http://lucid-fleet-core:5000
+      EMQX_API_URL: http://emqx:18083/api/v5
+      EMQX_API_USERNAME: ${EMQX_API_USERNAME:-lucid}
+      EMQX_API_PASSWORD: ${EMQX_API_PASSWORD:-lucid}
+    depends_on:
+      - lucid-db
+      - lucid-fleet-core
+      - emqx
+
+  lucid-ai:
+    build: ../lucid-ai
+    restart: unless-stopped
+    environment:
+      LUCID_DB_URL: postgresql://${POSTGRES_USER:-lucid}:${POSTGRES_PASSWORD:-lucid_secret}@lucid-db:5432/${POSTGRES_DB:-lucid}
+      LUCID_FLEET_CORE_URL: http://lucid-fleet-core:5000
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+    depends_on:
+      - lucid-db
+      - lucid-fleet-core
+      - ollama
+
+  lucid-ui:
+    build: ../lucid-ui
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      FLEET_CORE_URL: http://lucid-fleet-core:5000
+      AUTOMATION_URL: http://lucid-automation:5000
+      AI_URL: http://lucid-ai:5000
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:-lucid}
+      SESSION_SECRET: ${SESSION_SECRET:-change-me}
+    depends_on:
+      - lucid-fleet-core
+      - lucid-automation
+      - lucid-ai
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  emqx-provisioner:
+    build:
+      context: ../lucid-emqx
+      dockerfile: Provisioner.Dockerfile
+    restart: on-failure
+    environment:
+      EMQX_URL: http://emqx:18083
+      EMQX_USERNAME: ${EMQX_API_USERNAME:-lucid}
+      EMQX_PASSWORD: ${EMQX_API_PASSWORD:-RobLab2023*}
+      LUCID_FLEET_CORE_URL: http://lucid-fleet-core:5000
+    depends_on:
+      - emqx
+      - lucid-fleet-core
+
+volumes:
+  lucid_db_data:
+    name: lucid-db-data
+  emqx_data:
+    name: emqx-data
+  ollama_data:
