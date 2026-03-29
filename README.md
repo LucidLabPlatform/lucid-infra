@@ -49,7 +49,7 @@ This auth-focused Compose file only runs:
 
 In this variant:
 - EMQX authenticates local users from its built-in database
-- EMQX falls back to LDAP for researcher logins
+- EMQX can fall back to LDAP for researcher logins when LDAP vars are set
 - EMQX authorizes users from its built-in database ACL rules
 - `lucid-auth` provisions the broker users and ACL rules through the EMQX management API
 
