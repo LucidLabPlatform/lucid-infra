@@ -1,5 +1,6 @@
 services:
-  lucid-db:
+  db:
+    container_name: lucid-db
     build: ./lucid-db
     restart: unless-stopped
     environment:
@@ -17,7 +18,8 @@ services:
       retries: 10
       start_period: 10s
 
-  lucid-auth:
+  auth:
+    container_name: lucid-auth
     build: ./lucid-auth
     restart: unless-stopped
     ports:
@@ -39,6 +41,7 @@ services:
         condition: service_started
 
   emqx:
+    container_name: lucid-emqx
     build: ./lucid-emqx
     restart: unless-stopped
     environment:
@@ -69,6 +72,7 @@ services:
       - emqx_data:/opt/emqx/data
 
   emqx-provisioner:
+    container_name: lucid-emqx-provisioner
     build:
       context: ./lucid-emqx
       dockerfile: Provisioner.Dockerfile
