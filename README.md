@@ -19,17 +19,3 @@ Bring the stack up from this repo with:
 cp .env.example .env
 docker compose up -d --build
 ```
-
-Minimal stack for the current DB + broker phase:
-
-```bash
-cp .env.minimal.example .env
-docker compose -f docker-compose.minimal.yml up -d --build
-```
-
-This minimal Compose file only runs:
-- `lucid-db`
-- `emqx`
-- `emqx-provisioner`
-
-It intentionally leaves out `lucid-auth`, so EMQX runs with anonymous MQTT enabled in this variant.
