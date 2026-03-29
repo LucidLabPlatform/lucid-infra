@@ -33,3 +33,24 @@ This minimal Compose file only runs:
 - `emqx-provisioner`
 
 It intentionally leaves out `lucid-auth`, so EMQX runs with anonymous MQTT enabled in this variant.
+
+Focused secure stack for the current DB + broker + auth phase:
+
+```bash
+cp .env.auth.example .env
+docker compose -f docker-compose.auth.yml up -d --build
+```
+
+This auth-focused Compose file only runs:
+- `lucid-db`
+- `lucid-auth`
+- `emqx`
+- `emqx-provisioner`
+
+In this variant:
+- EMQX authenticates local users from its built-in database
+- EMQX falls back to LDAP for researcher logins
+- EMQX authorizes users from its built-in database ACL rules
+- `lucid-auth` provisions the broker users and ACL rules through the EMQX management API
+
+It is the smallest stack that enables MQTT authentication/authorization and LDAP-backed researcher access without bringing up the rest of Central Command.
