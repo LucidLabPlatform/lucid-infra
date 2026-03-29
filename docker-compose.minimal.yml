@@ -1,30 +1,30 @@
 services:
   lucid-db:
-    build: ../lucid-db
+    build: ./lucid-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-lucid}
-      POSTGRES_USER: ${POSTGRES_USER:-lucid}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CHANGE_ME}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - lucid_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lucid} -d ${POSTGRES_DB:-lucid}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 10s
 
   emqx:
-    build: ../lucid-emqx
+    build: ./lucid-emqx
     restart: unless-stopped
     environment:
       EMQX_NAME: emqx
       EMQX_HOST: emqx
-      EMQX_DASHBOARD__DEFAULT_USERNAME: ${EMQX_API_USERNAME:-lucid}
-      EMQX_DASHBOARD__DEFAULT_PASSWORD: ${EMQX_API_PASSWORD:-CHANGE_ME}
+      EMQX_DASHBOARD__DEFAULT_USERNAME: ${EMQX_API_USERNAME}
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: ${EMQX_API_PASSWORD}
       # No auth service is included in the minimal stack.
       EMQX_ALLOW_ANONYMOUS: "true"
     ports:
@@ -35,17 +35,17 @@ services:
 
   emqx-provisioner:
     build:
-      context: ../lucid-emqx
+      context: ./lucid-emqx
       dockerfile: Provisioner.Dockerfile
     restart: on-failure
     environment:
       EMQX_URL: http://emqx:18083
-      EMQX_USERNAME: ${EMQX_API_USERNAME:-lucid}
-      EMQX_PASSWORD: ${EMQX_API_PASSWORD:-CHANGE_ME}
+      EMQX_USERNAME: ${EMQX_API_USERNAME}
+      EMQX_PASSWORD: ${EMQX_API_PASSWORD}
       LUCID_DB_HOST: lucid-db:5432
-      LUCID_DB_NAME: ${POSTGRES_DB:-lucid}
-      LUCID_DB_USER: ${POSTGRES_USER:-lucid}
-      LUCID_DB_PASSWORD: ${POSTGRES_PASSWORD:-CHANGE_ME}
+      LUCID_DB_NAME: ${POSTGRES_DB}
+      LUCID_DB_USER: ${POSTGRES_USER}
+      LUCID_DB_PASSWORD: ${POSTGRES_PASSWORD}
     depends_on:
       lucid-db:
         condition: service_healthy

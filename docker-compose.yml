@@ -1,25 +1,25 @@
 services:
   lucid-db:
-    build: ../lucid-db
+    build: ./lucid-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-lucid}
-      POSTGRES_USER: ${POSTGRES_USER:-lucid}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-REDACTED}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - lucid_db_data:/var/lib/postgresql/data
 
   lucid-auth:
-    build: ../lucid-auth
+    build: ./lucid-auth
     restart: unless-stopped
     ports:
       - "4000:4000"
     environment:
       EMQX_URL: http://emqx:18083
-      EMQX_USERNAME: ${EMQX_API_USERNAME:-lucid}
-      EMQX_PASSWORD: ${EMQX_API_PASSWORD:-lucid}
-      BOOTSTRAP_CC_USER: ${LUCID_MQTT_USERNAME:-central-command}
-      BOOTSTRAP_CC_PASSWORD: ${LUCID_MQTT_PASSWORD:-REDACTED}
+      EMQX_USERNAME: ${EMQX_API_USERNAME}
+      EMQX_PASSWORD: ${EMQX_API_PASSWORD}
+      BOOTSTRAP_CC_USER: ${LUCID_MQTT_USERNAME}
+      BOOTSTRAP_CC_PASSWORD: ${LUCID_MQTT_PASSWORD}
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:4000/health', timeout=3).read()\""]
       interval: 10s
@@ -31,13 +31,13 @@ services:
         condition: service_started
 
   emqx:
-    build: ../lucid-emqx
+    build: ./lucid-emqx
     restart: unless-stopped
     environment:
       EMQX_NAME: emqx
       EMQX_HOST: emqx
-      EMQX_DASHBOARD__DEFAULT_USERNAME: ${EMQX_API_USERNAME:-lucid}
-      EMQX_DASHBOARD__DEFAULT_PASSWORD: ${EMQX_API_PASSWORD:-lucid}
+      EMQX_DASHBOARD__DEFAULT_USERNAME: ${EMQX_API_USERNAME}
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: ${EMQX_API_PASSWORD}
       EMQX_ALLOW_ANONYMOUS: "false"
       EMQX_AUTHENTICATION__1__MECHANISM: password_based
       EMQX_AUTHENTICATION__1__BACKEND: built_in_database
@@ -49,7 +49,7 @@ services:
       EMQX_AUTHENTICATION__2__USERNAME: '"${LDAP_BIND_USERNAME:-}"'
       EMQX_AUTHENTICATION__2__PASSWORD: '"${LDAP_BIND_PASSWORD:-}"'
       EMQX_AUTHENTICATION__2__BASE_DN: '"${LDAP_BASE_DN:-}"'
-      EMQX_AUTHENTICATION__2__FILTER: '"${LDAP_FILTER:-(&(objectClass=inetOrgPerson)(uid=$${username}))}"'
+      EMQX_AUTHENTICATION__2__FILTER: '"${LDAP_FILTER:-}"'
       EMQX_AUTHENTICATION__2__QUERY_TIMEOUT: 5s
       EMQX_AUTHORIZATION__NO_MATCH: deny
       EMQX_AUTHORIZATION__SOURCES__1__TYPE: built_in_database
@@ -64,51 +64,51 @@ services:
       - emqx_data:/opt/emqx/data
 
   lucid-fleet-core:
-    build: ../lucid-fleet-core
+    build: ./lucid-fleet-core
     restart: unless-stopped
     environment:
       LUCID_MQTT_HOST: emqx
       LUCID_MQTT_PORT: "1883"
-      LUCID_MQTT_USERNAME: ${LUCID_MQTT_USERNAME:-central-command}
-      LUCID_MQTT_PASSWORD: ${LUCID_MQTT_PASSWORD:-REDACTED}
-      LUCID_DB_URL: postgresql://${POSTGRES_USER:-lucid}:${POSTGRES_PASSWORD:-REDACTED}@lucid-db:5432/${POSTGRES_DB:-lucid}
+      LUCID_MQTT_USERNAME: ${LUCID_MQTT_USERNAME}
+      LUCID_MQTT_PASSWORD: ${LUCID_MQTT_PASSWORD}
+      LUCID_DB_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@lucid-db:5432/${POSTGRES_DB}
       EMQX_API_URL: http://emqx:18083/api/v5
-      EMQX_API_USERNAME: ${EMQX_API_USERNAME:-lucid}
-      EMQX_API_PASSWORD: ${EMQX_API_PASSWORD:-lucid}
+      EMQX_API_USERNAME: ${EMQX_API_USERNAME}
+      EMQX_API_PASSWORD: ${EMQX_API_PASSWORD}
     depends_on:
       - lucid-db
       - emqx
       - lucid-auth
 
   lucid-automation:
-    build: ../lucid-automation
+    build: ./lucid-automation
     restart: unless-stopped
     environment:
-      LUCID_DB_URL: postgresql://${POSTGRES_USER:-lucid}:${POSTGRES_PASSWORD:-REDACTED}@lucid-db:5432/${POSTGRES_DB:-lucid}
+      LUCID_DB_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@lucid-db:5432/${POSTGRES_DB}
       LUCID_FLEET_CORE_URL: http://lucid-fleet-core:5000
       EMQX_API_URL: http://emqx:18083/api/v5
-      EMQX_API_USERNAME: ${EMQX_API_USERNAME:-lucid}
-      EMQX_API_PASSWORD: ${EMQX_API_PASSWORD:-lucid}
+      EMQX_API_USERNAME: ${EMQX_API_USERNAME}
+      EMQX_API_PASSWORD: ${EMQX_API_PASSWORD}
     depends_on:
       - lucid-db
       - lucid-fleet-core
       - emqx
 
   lucid-ai:
-    build: ../lucid-ai
+    build: ./lucid-ai
     restart: unless-stopped
     environment:
-      LUCID_DB_URL: postgresql://${POSTGRES_USER:-lucid}:${POSTGRES_PASSWORD:-REDACTED}@lucid-db:5432/${POSTGRES_DB:-lucid}
+      LUCID_DB_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@lucid-db:5432/${POSTGRES_DB}
       LUCID_FLEET_CORE_URL: http://lucid-fleet-core:5000
       OLLAMA_BASE_URL: http://ollama:11434
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+      OLLAMA_MODEL: ${OLLAMA_MODEL}
     depends_on:
       - lucid-db
       - lucid-fleet-core
       - ollama
 
   lucid-ui:
-    build: ../lucid-ui
+    build: ./lucid-ui
     restart: unless-stopped
     ports:
       - "5000:5000"
@@ -116,8 +116,8 @@ services:
       FLEET_CORE_URL: http://lucid-fleet-core:5000
       AUTOMATION_URL: http://lucid-automation:5000
       AI_URL: http://lucid-ai:5000
-      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:-lucid}
-      SESSION_SECRET: ${SESSION_SECRET:-REDACTED}
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD}
+      SESSION_SECRET: ${SESSION_SECRET}
     depends_on:
       - lucid-fleet-core
       - lucid-automation
@@ -133,13 +133,13 @@ services:
 
   emqx-provisioner:
     build:
-      context: ../lucid-emqx
+      context: ./lucid-emqx
       dockerfile: Provisioner.Dockerfile
     restart: on-failure
     environment:
       EMQX_URL: http://emqx:18083
-      EMQX_USERNAME: ${EMQX_API_USERNAME:-lucid}
-      EMQX_PASSWORD: ${EMQX_API_PASSWORD:-REDACTED}
+      EMQX_USERNAME: ${EMQX_API_USERNAME}
+      EMQX_PASSWORD: ${EMQX_API_PASSWORD}
       LUCID_FLEET_CORE_URL: http://lucid-fleet-core:5000
     depends_on:
       - emqx

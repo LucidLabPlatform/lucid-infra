@@ -1,0 +1,9 @@
+[submodule "lucid-emqx"]
+	path = lucid-emqx
+	url = https://github.com/LucidLabPlatform/lucid-emqx.git
+[submodule "lucid-auth"]
+	path = lucid-auth
+	url = https://github.com/LucidLabPlatform/lucid-auth.git
+[submodule "lucid-db"]
+	path = lucid-db
+	url = https://github.com/LucidLabPlatform/lucid-db.git
