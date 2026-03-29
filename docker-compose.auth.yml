@@ -6,8 +6,16 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
     volumes:
       - lucid_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   lucid-auth:
     build: ./lucid-auth
@@ -56,80 +64,9 @@ services:
       EMQX_AUTHORIZATION__SOURCES__1__ENABLE: "true"
     ports:
       - "1883:1883"
-      - "8083:8083"
-      - "8084:8084"
-      - "8883:8883"
       - "18083:18083"
     volumes:
       - emqx_data:/opt/emqx/data
-
-  lucid-fleet-core:
-    build: ./lucid-fleet-core
-    restart: unless-stopped
-    environment:
-      LUCID_MQTT_HOST: emqx
-      LUCID_MQTT_PORT: "1883"
-      LUCID_MQTT_USERNAME: ${LUCID_MQTT_USERNAME}
-      LUCID_MQTT_PASSWORD: ${LUCID_MQTT_PASSWORD}
-      LUCID_DB_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@lucid-db:5432/${POSTGRES_DB}
-      EMQX_API_URL: http://emqx:18083/api/v5
-      EMQX_API_USERNAME: ${EMQX_API_USERNAME}
-      EMQX_API_PASSWORD: ${EMQX_API_PASSWORD}
-    depends_on:
-      - lucid-db
-      - emqx
-      - lucid-auth
-
-  lucid-automation:
-    build: ./lucid-automation
-    restart: unless-stopped
-    environment:
-      LUCID_DB_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@lucid-db:5432/${POSTGRES_DB}
-      LUCID_FLEET_CORE_URL: http://lucid-fleet-core:5000
-      EMQX_API_URL: http://emqx:18083/api/v5
-      EMQX_API_USERNAME: ${EMQX_API_USERNAME}
-      EMQX_API_PASSWORD: ${EMQX_API_PASSWORD}
-    depends_on:
-      - lucid-db
-      - lucid-fleet-core
-      - emqx
-
-  lucid-ai:
-    build: ./lucid-ai
-    restart: unless-stopped
-    environment:
-      LUCID_DB_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@lucid-db:5432/${POSTGRES_DB}
-      LUCID_FLEET_CORE_URL: http://lucid-fleet-core:5000
-      OLLAMA_BASE_URL: http://ollama:11434
-      OLLAMA_MODEL: ${OLLAMA_MODEL}
-    depends_on:
-      - lucid-db
-      - lucid-fleet-core
-      - ollama
-
-  lucid-ui:
-    build: ./lucid-ui
-    restart: unless-stopped
-    ports:
-      - "5000:5000"
-    environment:
-      FLEET_CORE_URL: http://lucid-fleet-core:5000
-      AUTOMATION_URL: http://lucid-automation:5000
-      AI_URL: http://lucid-ai:5000
-      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD}
-      SESSION_SECRET: ${SESSION_SECRET}
-    depends_on:
-      - lucid-fleet-core
-      - lucid-automation
-      - lucid-ai
-
-  ollama:
-    image: ollama/ollama:latest
-    restart: unless-stopped
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
 
   emqx-provisioner:
     build:
@@ -140,14 +77,18 @@ services:
       EMQX_URL: http://emqx:18083
       EMQX_USERNAME: ${EMQX_API_USERNAME}
       EMQX_PASSWORD: ${EMQX_API_PASSWORD}
-      LUCID_FLEET_CORE_URL: http://lucid-fleet-core:5000
+      LUCID_DB_HOST: lucid-db:5432
+      LUCID_DB_NAME: ${POSTGRES_DB}
+      LUCID_DB_USER: ${POSTGRES_USER}
+      LUCID_DB_PASSWORD: ${POSTGRES_PASSWORD}
     depends_on:
-      - emqx
-      - lucid-fleet-core
+      lucid-db:
+        condition: service_healthy
+      emqx:
+        condition: service_started
 
 volumes:
   lucid_db_data:
     name: lucid-db-data
   emqx_data:
     name: emqx-data
-  ollama_data:
