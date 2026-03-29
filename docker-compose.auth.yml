@@ -86,7 +86,7 @@ services:
       LUCID_DB_USER: ${POSTGRES_USER}
       LUCID_DB_PASSWORD: ${POSTGRES_PASSWORD}
     depends_on:
-      lucid-db:
+      db:
         condition: service_healthy
       emqx:
         condition: service_started
