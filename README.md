@@ -54,6 +54,6 @@ LDAP authentication is disabled by default. To enable it, set `LDAP_SERVER` and 
 
 | File | Services | MQTT auth |
 |------|----------|-----------|
-| `docker-compose.yml` | All (DB, EMQX, auth, fleet-core, automation, AI, UI, Ollama) | Authenticated |
+| `docker-compose.yml` | All (DB, EMQX, auth, orchestrator, automation, AI, UI, Ollama) | Authenticated |
 | `docker-compose.auth.yml` | DB, EMQX, auth, provisioner | Authenticated |
 | `docker-compose.minimal.yml` | DB, EMQX, provisioner | Anonymous |
