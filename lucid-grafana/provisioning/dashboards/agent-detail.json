@@ -1,0 +1,392 @@
+{
+  "id": null,
+  "uid": "lucid-agent-detail",
+  "title": "LUCID Agent Detail",
+  "tags": ["lucid"],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "editable": true,
+  "templating": {
+    "list": [
+      {
+        "name": "agent_id",
+        "type": "query",
+        "label": "Agent",
+        "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+        "query": "SELECT DISTINCT agent_id FROM agents ORDER BY agent_id",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "State",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [
+            { "type": "value", "options": { "online": { "color": "green", "index": 0 } } },
+            { "type": "value", "options": { "offline": { "color": "red", "index": 1 } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT state AS value FROM agent_status WHERE agent_id = '$agent_id'",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Uptime",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": { "mode": "fixed", "fixedColor": "blue" },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT uptime_s AS value FROM agent_status WHERE agent_id = '$agent_id'",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Version",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": { "colorMode": "none", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "text" },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "text", "value": null }] }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT version AS value FROM agent_metadata WHERE agent_id = '$agent_id'",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Platform",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": { "colorMode": "none", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "text" },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "text", "value": null }] }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT platform || ' / ' || architecture AS value FROM agent_metadata WHERE agent_id = '$agent_id'",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "gauge",
+      "title": "CPU %",
+      "gridPos": { "x": 0, "y": 4, "w": 8, "h": 5 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdMarkers": true },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 70 },
+              { "color": "red", "value": 90 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT value FROM agent_telemetry WHERE agent_id = '$agent_id' AND metric = 'cpu_percent' ORDER BY received_ts DESC LIMIT 1",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "gauge",
+      "title": "Memory %",
+      "gridPos": { "x": 8, "y": 4, "w": 8, "h": 5 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdMarkers": true },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 75 },
+              { "color": "red", "value": 90 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT value FROM agent_telemetry WHERE agent_id = '$agent_id' AND metric = 'memory_percent' ORDER BY received_ts DESC LIMIT 1",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "gauge",
+      "title": "Disk %",
+      "gridPos": { "x": 16, "y": 4, "w": 8, "h": 5 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdMarkers": true },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 80 },
+              { "color": "red", "value": 95 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT value FROM agent_telemetry WHERE agent_id = '$agent_id' AND metric = 'disk_percent' ORDER BY received_ts DESC LIMIT 1",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Telemetry Trends",
+      "gridPos": { "x": 0, "y": 9, "w": 24, "h": 8 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "percent", "custom": { "lineWidth": 2, "fillOpacity": 10 } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT received_ts AS time, value AS \"cpu_percent\" FROM agent_telemetry WHERE agent_id = '$agent_id' AND metric = 'cpu_percent' AND $__timeFilter(received_ts) ORDER BY time",
+          "refId": "CPU"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT received_ts AS time, value AS \"memory_percent\" FROM agent_telemetry WHERE agent_id = '$agent_id' AND metric = 'memory_percent' AND $__timeFilter(received_ts) ORDER BY time",
+          "refId": "MEM"
+        },
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT received_ts AS time, value AS \"disk_percent\" FROM agent_telemetry WHERE agent_id = '$agent_id' AND metric = 'disk_percent' AND $__timeFilter(received_ts) ORDER BY time",
+          "refId": "DISK"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Components",
+      "gridPos": { "x": 0, "y": 17, "w": 12, "h": 6 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": { "cellHeight": "sm", "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto", "filterable": true } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "state" },
+            "properties": [
+              { "id": "custom.displayMode", "value": "color-background" },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "enabled": { "color": "green", "index": 0 } } },
+                  { "type": "value", "options": { "disabled": { "color": "orange", "index": 1 } } }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT cs.component_id, cs.state, cm.version, cs.received_ts AS last_seen FROM component_status cs LEFT JOIN component_metadata cm ON cs.agent_id = cm.agent_id AND cs.component_id = cm.component_id WHERE cs.agent_id = '$agent_id' ORDER BY cs.component_id",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "table",
+      "title": "Recent Commands",
+      "gridPos": { "x": 12, "y": 17, "w": 12, "h": 6 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": { "cellHeight": "sm", "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto" } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "result" },
+            "properties": [
+              { "id": "custom.displayMode", "value": "color-background" },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "ok": { "color": "green", "index": 0 } } },
+                  { "type": "value", "options": { "failed": { "color": "red", "index": 1 } } },
+                  { "type": "value", "options": { "pending": { "color": "yellow", "index": 2 } } }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(component_id, '-') AS component, action, CASE WHEN result_received AND result_ok THEN 'ok' WHEN result_received AND NOT result_ok THEN 'failed' ELSE 'pending' END AS result, sent_ts, CASE WHEN result_ts IS NOT NULL THEN EXTRACT(EPOCH FROM (result_ts - sent_ts)) * 1000 ELSE NULL END AS latency_ms FROM commands WHERE agent_id = '$agent_id' ORDER BY sent_ts DESC LIMIT 20",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "Recent Logs (agent-level)",
+      "gridPos": { "x": 0, "y": 23, "w": 24, "h": 8 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": { "cellHeight": "sm", "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto", "filterable": true } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "level" },
+            "properties": [
+              { "id": "custom.displayMode", "value": "color-background" },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "error": { "color": "red", "index": 0 } } },
+                  { "type": "value", "options": { "warning": { "color": "yellow", "index": 1 } } },
+                  { "type": "value", "options": { "info": { "color": "blue", "index": 2 } } },
+                  { "type": "value", "options": { "debug": { "color": "grey", "index": 3 } } }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT l.received_ts, line->>'level' AS level, line->>'logger' AS logger, line->>'message' AS message FROM logs, jsonb_array_elements(payload->'lines') AS line(line) WHERE agent_id = '$agent_id' AND component_id IS NULL AND $__timeFilter(received_ts) ORDER BY received_ts DESC LIMIT 200",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

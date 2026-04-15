@@ -1,0 +1,210 @@
+{
+  "id": null,
+  "uid": "lucid-component-detail",
+  "title": "LUCID Component Detail",
+  "tags": ["lucid"],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "editable": true,
+  "templating": {
+    "list": [
+      {
+        "name": "agent_id",
+        "type": "query",
+        "label": "Agent",
+        "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+        "query": "SELECT DISTINCT agent_id FROM agents ORDER BY agent_id",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "sort": 1
+      },
+      {
+        "name": "component_id",
+        "type": "query",
+        "label": "Component",
+        "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+        "query": "SELECT DISTINCT component_id FROM components WHERE agent_id = '$agent_id' ORDER BY component_id",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "State",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [
+            { "type": "value", "options": { "enabled": { "color": "green", "index": 0 } } },
+            { "type": "value", "options": { "disabled": { "color": "orange", "index": 1 } } },
+            { "type": "value", "options": { "offline": { "color": "red", "index": 2 } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT state AS value FROM component_status WHERE agent_id = '$agent_id' AND component_id = '$component_id'",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Version",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": { "colorMode": "none", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "text" },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "text", "value": null }] }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT version AS value FROM component_metadata WHERE agent_id = '$agent_id' AND component_id = '$component_id'",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "table",
+      "title": "Capabilities",
+      "gridPos": { "x": 8, "y": 0, "w": 16, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": { "cellHeight": "sm", "footer": { "show": false } },
+      "fieldConfig": { "defaults": { "custom": { "align": "auto" } }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT capabilities FROM component_metadata WHERE agent_id = '$agent_id' AND component_id = '$component_id'",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "table",
+      "title": "Latest Telemetry",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 6 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": { "cellHeight": "sm", "footer": { "show": false } },
+      "fieldConfig": { "defaults": { "custom": { "align": "auto" } }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT DISTINCT ON (metric) metric, value, received_ts FROM component_telemetry WHERE agent_id = '$agent_id' AND component_id = '$component_id' ORDER BY metric, received_ts DESC",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "Recent Commands",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 6 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": { "cellHeight": "sm", "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto" } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "result" },
+            "properties": [
+              { "id": "custom.displayMode", "value": "color-background" },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "ok": { "color": "green", "index": 0 } } },
+                  { "type": "value", "options": { "failed": { "color": "red", "index": 1 } } },
+                  { "type": "value", "options": { "pending": { "color": "yellow", "index": 2 } } }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT action, CASE WHEN result_received AND result_ok THEN 'ok' WHEN result_received AND NOT result_ok THEN 'failed' ELSE 'pending' END AS result, sent_ts, CASE WHEN result_ts IS NOT NULL THEN EXTRACT(EPOCH FROM (result_ts - sent_ts)) * 1000 ELSE NULL END AS latency_ms FROM commands WHERE agent_id = '$agent_id' AND component_id = '$component_id' ORDER BY sent_ts DESC LIMIT 20",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "Recent Logs",
+      "gridPos": { "x": 0, "y": 10, "w": 24, "h": 8 },
+      "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+      "options": { "cellHeight": "sm", "footer": { "show": false } },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto", "filterable": true } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "level" },
+            "properties": [
+              { "id": "custom.displayMode", "value": "color-background" },
+              {
+                "id": "mappings",
+                "value": [
+                  { "type": "value", "options": { "error": { "color": "red", "index": 0 } } },
+                  { "type": "value", "options": { "warning": { "color": "yellow", "index": 1 } } },
+                  { "type": "value", "options": { "info": { "color": "blue", "index": 2 } } },
+                  { "type": "value", "options": { "debug": { "color": "grey", "index": 3 } } }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "lucid-postgres" },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT received_ts, line->>'level' AS level, line->>'logger' AS logger, line->>'message' AS message FROM logs, jsonb_array_elements(payload->'lines') AS line(line) WHERE agent_id = '$agent_id' AND component_id = '$component_id' AND $__timeFilter(received_ts) ORDER BY received_ts DESC LIMIT 200",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}
