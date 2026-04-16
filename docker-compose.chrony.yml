@@ -1,0 +1,9 @@
+services:
+  lucid-chrony:
+    build: ./lucid-chrony
+    container_name: lucid-chrony
+    restart: unless-stopped
+    ports:
+      - "123:123/udp"
+    cap_add:
+      - SYS_TIME
