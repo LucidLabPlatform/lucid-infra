@@ -1,0 +1,9 @@
+# Infra stack: db, auth, emqx (+ provisioner), chrony.
+# Compose two ways:
+#   - Standalone (this repo only): docker compose -f compose.yaml up -d
+#   - As part of the umbrella: included by lucid-central-command/compose.yaml
+include:
+  - compose.db.yaml
+  - compose.auth.yaml
+  - compose.emqx.yaml
+  - compose.chrony.yaml
