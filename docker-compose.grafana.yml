@@ -1,0 +1,23 @@
+services:
+  grafana:
+    container_name: lucid-grafana
+    image: grafana/grafana:11.6.0
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-lucid-grafana}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+      GF_DATABASE_TYPE: sqlite3
+      GF_DATASOURCE_PG_USER: ${POSTGRES_USER}
+      GF_DATASOURCE_PG_PASSWORD: ${POSTGRES_PASSWORD}
+      GF_DATASOURCE_PG_DATABASE: ${POSTGRES_DB}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./lucid-grafana/provisioning:/etc/grafana/provisioning:ro
+
+volumes:
+  grafana_data:
+    name: lucid-grafana-data

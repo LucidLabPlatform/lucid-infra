@@ -1,0 +1,17 @@
+# Home Assistant configuration for LUCID Fleet monitoring.
+# The lucid-ha-bridge service handles MQTT discovery and state relay.
+homeassistant:
+  name: LUCID Fleet
+
+mqtt:
+  broker: emqx
+  port: 1883
+  username: !secret mqtt_username
+  password: !secret mqtt_password
+  discovery: true
+  discovery_prefix: homeassistant
+
+logger:
+  default: warning
+  logs:
+    homeassistant.components.mqtt: info
