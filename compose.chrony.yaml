@@ -1,7 +1,7 @@
 services:
-  lucid-chrony:
-    build: ./lucid-chrony
+  chrony:
     container_name: lucid-chrony
+    build: ./lucid-chrony
     restart: unless-stopped
     ports:
       - "123:123/udp"
